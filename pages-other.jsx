@@ -333,10 +333,10 @@ function CheckoutPage({ go, cart, products_byId, clearCart }) {
           <div className="crumbs eyebrow"><span>Bolsa</span><span>/</span><span>Checkout</span></div>
           <h1>Checkout</h1>
         </div>
-        <div style={{display: "flex", gap: 24, fontFamily:"var(--font-mono)", fontSize: 11, letterSpacing: "0.14em", textTransform:"uppercase"}}>
+        <div className="checkout-steps">
           {["Datos", "Envío", "Pago"].map((s, i) => (
-            <div key={s} style={{display:"flex", alignItems:"center", gap: 8, opacity: step > i+1 ? 0.5 : 1, color: step === i+1 ? "var(--fg)" : "var(--mute)"}}>
-              <span style={{display:"inline-block", width: 22, height: 22, border: "1px solid", borderColor: step >= i+1 ? "var(--fg)" : "var(--line-strong)", textAlign:"center", lineHeight: "22px", background: step > i+1 ? "var(--fg)" : "transparent", color: step > i+1 ? "var(--bg)" : "inherit"}}>
+            <div key={s} className="checkout-step" style={{opacity: step > i+1 ? 0.5 : 1, color: step === i+1 ? "var(--fg)" : "var(--mute)"}}>
+              <span className="checkout-step-dot" style={{borderColor: step >= i+1 ? "var(--fg)" : "var(--line-strong)", background: step > i+1 ? "var(--fg)" : "transparent", color: step > i+1 ? "var(--bg)" : "inherit"}}>
                 {step > i+1 ? "✓" : i+1}
               </span>
               {s}
@@ -345,7 +345,7 @@ function CheckoutPage({ go, cart, products_byId, clearCart }) {
         </div>
       </div>
 
-      <div style={{display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 64, paddingBottom: 96}}>
+      <div className="checkout-body">
         <div>
           {step === 1 && (
             <div style={{display:"flex", flexDirection:"column", gap: 18}}>
@@ -435,7 +435,7 @@ function CheckoutPage({ go, cart, products_byId, clearCart }) {
           )}
         </div>
 
-        <aside style={{position:"sticky", top: 120, alignSelf:"start", border: "1px solid var(--line)", padding: 24}}>
+        <aside className="checkout-summary">
           <div className="eyebrow" style={{marginBottom: 16}}>Tu pedido · {lines.length} prendas</div>
           {lines.map((l, i) => (
             <div key={i} style={{display:"grid", gridTemplateColumns: "56px 1fr auto", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--line)"}}>

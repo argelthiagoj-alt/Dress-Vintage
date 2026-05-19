@@ -72,6 +72,7 @@ function PromoMarquee() {
 /* ===== HEADER ============================ */
 
 function Header({ route, go, theme, setTheme, cartCount, openCart }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const navItems = [
     { id: "home",     label: "Inicio" },
     { id: "catalog",  label: "Tienda" },
@@ -82,42 +83,127 @@ function Header({ route, go, theme, setTheme, cartCount, openCart }) {
   const active = route.startsWith("catalog") ? "catalog"
     : route.startsWith("product") ? "catalog"
     : route;
+
+  useEffect(() => { setMenuOpen(false); }, [route]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  const goAndClose = (r) => { setMenuOpen(false); go(r); };
+  const bagSvg = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
+      <path d="M5 7h14l-1.2 13.5a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 7z" />
+      <path d="M8.5 7V5.5a3.5 3.5 0 0 1 7 0V7" />
+    </svg>
+  );
+
   return (
-    <header className="header">
-      <PromoMarquee />
-      <div className="shell">
-        <div className="header-row">
-          <nav className="header-nav">
-            {navItems.map(it => (
+    <>
+      <header className="header">
+        <PromoMarquee />
+        <div className="shell">
+          <div className="header-row">
+            <div className="header-left">
               <button
-                key={it.id}
-                className={active === it.id ? "active" : ""}
-                onClick={() => go(it.id === "catalog" ? "catalog:all" : it.id)}
+                className="hamburger"
+                aria-label="Abrir menú"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen(true)}
               >
-                {it.label}
+                <span /><span /><span />
               </button>
-            ))}
-          </nav>
-          <div className="brand" onClick={() => go("home")}>
+              <nav className="header-nav">
+                {navItems.map(it => (
+                  <button
+                    key={it.id}
+                    className={active === it.id ? "active" : ""}
+                    onClick={() => go(it.id === "catalog" ? "catalog:all" : it.id)}
+                  >
+                    {it.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            <div className="brand" onClick={() => go("home")}>
+              <div className="brand-mark" />
+              <div className="brand-word">DressVintage</div>
+            </div>
+            <div className="header-actions">
+              <button className="hide-mobile" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                {theme === "dark" ? "Light" : "Dark"}
+              </button>
+              <button className="hide-mobile" onClick={() => go("login")}>Cuenta</button>
+              <button onClick={openCart} aria-label="Abrir bolsa" className="bag-btn">
+                {bagSvg}
+                {cartCount > 0 && <span className="bag-count">{cartCount}</span>}
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div
+        className={`nav-overlay ${menuOpen ? "open" : ""}`}
+        onClick={() => setMenuOpen(false)}
+      />
+      <aside
+        className={`nav-drawer ${menuOpen ? "open" : ""}`}
+        aria-hidden={!menuOpen}
+        role="dialog"
+        aria-label="Menú principal"
+      >
+        <div className="nav-drawer-head">
+          <div className="brand" onClick={() => goAndClose("home")}>
             <div className="brand-mark" />
             <div className="brand-word">DressVintage</div>
           </div>
-          <div className="header-actions">
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? "Light" : "Dark"}
-            </button>
-            <button onClick={() => go("login")}>Cuenta</button>
-            <button onClick={openCart} aria-label="Abrir bolsa" className="bag-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
-                <path d="M5 7h14l-1.2 13.5a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 7z" />
-                <path d="M8.5 7V5.5a3.5 3.5 0 0 1 7 0V7" />
-              </svg>
-              {cartCount > 0 && <span className="bag-count">{cartCount}</span>}
-            </button>
-          </div>
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="mono nav-close"
+            aria-label="Cerrar menú"
+          >
+            Cerrar ✕
+          </button>
         </div>
-      </div>
-    </header>
+        <nav className="nav-drawer-body">
+          {navItems.map(it => (
+            <button
+              key={it.id}
+              className={active === it.id ? "active" : ""}
+              onClick={() => goAndClose(it.id === "catalog" ? "catalog:all" : it.id)}
+            >
+              <span>{it.label}</span>
+              <span className="arr">→</span>
+            </button>
+          ))}
+        </nav>
+        <div className="nav-drawer-foot">
+          <button onClick={() => goAndClose("login")}>
+            <span>Cuenta</span><span className="arr">→</span>
+          </button>
+          <button onClick={() => { setMenuOpen(false); openCart(); }}>
+            <span className="nav-bag">
+              {bagSvg}
+              <span>Bolsa</span>
+              {cartCount > 0 && <span className="nav-bag-count">({cartCount})</span>}
+            </span>
+            <span className="arr">→</span>
+          </button>
+          <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            <span>Modo {theme === "dark" ? "claro" : "oscuro"}</span>
+            <span className="arr">{theme === "dark" ? "☀" : "☾"}</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 
