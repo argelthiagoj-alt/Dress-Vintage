@@ -230,11 +230,11 @@ button {
   width: 36px; height: 36px;
   border-radius: 50%;
   background: var(--fg) center/cover;
-  background-image: url('assets/logo.jpg');
+  background-image: url('assets/logo.png');
   filter: contrast(1) ;
   transition: transform var(--t) var(--ease);
 }
-[data-theme="dark"] .brand-mark { background: #fff center/cover; background-image: url('assets/logo.jpg'); }
+[data-theme="dark"] .brand-mark { background: #fff center/cover; background-image: url('assets/logo.png'); }
 .brand:hover .brand-mark { transform: rotate(-12deg) scale(1.05); }
 .brand-word {
   font-family: var(--font-display);
