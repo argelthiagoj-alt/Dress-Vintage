@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DressVintage — Vintage moderno, Buenos Aires</title>
+<meta name="description" content="DressVintage. Tienda de ropa urbana vintage moderna. Tiradas cortas, confección local, blanco y negro." />
+
+<!-- ext-resource-dependency: code-referenced images (lifted from JSX/JS) -->
+<meta name="ext-resource-dependency" content="assets/hero.png" data-resource-id="heroImg" />
+<meta name="ext-resource-dependency" content="assets/manifesto.png" data-resource-id="manifestoImg" />
+<meta name="ext-resource-dependency" content="assets/cat-remeras.png" data-resource-id="catRemeras" />
+<meta name="ext-resource-dependency" content="assets/cat-hoodies.png" data-resource-id="catHoodies" />
+<meta name="ext-resource-dependency" content="assets/cat-sweaters.png" data-resource-id="catSweaters" />
+<meta name="ext-resource-dependency" content="assets/cat-camperas.png" data-resource-id="catCamperas" />
+<meta name="ext-resource-dependency" content="assets/cat-pantalones.png" data-resource-id="catPantalones" />
+<meta name="ext-resource-dependency" content="assets/cat-accesorios.png" data-resource-id="catAccesorios" />
+<meta name="ext-resource-dependency" content="assets/outfit-01.png" data-resource-id="outfit01" />
+<meta name="ext-resource-dependency" content="assets/outfit-02.png" data-resource-id="outfit02" />
+<meta name="ext-resource-dependency" content="assets/outfit-03.png" data-resource-id="outfit03" />
+<meta name="ext-resource-dependency" content="assets/prod-hoodie-estelar.jpeg" data-resource-id="prodHoodieEstelar" />
+<meta name="ext-resource-dependency" content="assets/prod-campera-lastjean.jpeg" data-resource-id="prodCamperaLastjean" />
+<meta name="ext-resource-dependency" content="assets/prod-remera-square.jpeg" data-resource-id="prodRemeraSquare" />
+<meta name="ext-resource-dependency" content="assets/prod-baggy-oxid.jpeg" data-resource-id="prodBaggyOxid" />
+<meta name="ext-resource-dependency" content="assets/prod-sweater-brand.jpeg" data-resource-id="prodSweaterBrand" />
+<meta name="ext-resource-dependency" content="assets/prod-sweater-pin.jpeg" data-resource-id="prodSweaterPin" />
+<meta name="ext-resource-dependency" content="assets/prod-hojaseca.jpeg" data-resource-id="prodHojaseca" />
+<meta name="ext-resource-dependency" content="assets/prod-gorros.jpeg" data-resource-id="prodGorros" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Splash thumbnail used during unpack + as no-JS fallback -->
+<template id="__bundler_thumbnail" data-bg-color="#ffffff">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#ffffff"/>
+    <g transform="translate(600 400)">
+      <circle cx="0" cy="-110" r="70" fill="#000"/>
+      <text x="0" y="-100" text-anchor="middle" fill="#fff"
+            font-family="Archivo, system-ui, sans-serif"
+            font-weight="900" font-size="38" letter-spacing="-1">DV</text>
+      <text x="0" y="40" text-anchor="middle" fill="#000"
+            font-family="Archivo, system-ui, sans-serif"
+            font-weight="900" font-size="120" letter-spacing="-4">DRESS</text>
+      <text x="0" y="160" text-anchor="middle"
+            font-family="Archivo, system-ui, sans-serif"
+            font-weight="900" font-style="italic"
+            font-size="120" letter-spacing="-4"
+            fill="none" stroke="#000" stroke-width="2">VINTAGE</text>
+      <text x="0" y="240" text-anchor="middle" fill="#6b6b6b"
+            font-family="JetBrains Mono, ui-monospace, monospace"
+            font-size="18" letter-spacing="6">CAP·03 / OTOÑO 2026</text>
+    </g>
+  </svg>
+</template>
+
+<!-- Resource resolver: prefers bundler-injected blob URL, falls back to file path -->
+<script>
+  window.R = function (id, fallback) {
+    return (window.__resources && window.__resources[id]) || fallback;
+  };
+</script>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data.js"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="pages-shop.jsx"></script>
+<script type="text/babel" src="pages-other.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

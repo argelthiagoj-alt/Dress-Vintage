@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(curl -s -o /tmp/design_payload.json -w \"HTTP %{http_code} - Size: %{size_download} bytes\\\\n\" \"https://api.anthropic.com/v1/design/h/CCZtrjqcRQkYFgCwypED-w\")",
+      "PowerShell($out = \"$env:TEMP\\\\design_payload.bin\"; Invoke-WebRequest -Uri \"https://api.anthropic.com/v1/design/h/CCZtrjqcRQkYFgCwypED-w\" -OutFile $out -UseBasicParsing; \\(Get-Item $out\\).Length)",
+      "PowerShell($out = \"$env:TEMP\\\\design_payload.bin\"; $bytes = [System.IO.File]::ReadAllBytes\\($out\\)[0..15]; $bytes | ForEach-Object { \"{0:X2}\" -f $_ } ; \"----\"; $head = Get-Content $out -TotalCount 1; $head.Substring\\(0, [Math]::Min\\(200, $head.Length\\)\\))",
+      "PowerShell($in = \"$env:TEMP\\\\design_payload.bin\"; $out = \"$env:TEMP\\\\design_payload.json\"; $fs = [System.IO.File]::OpenRead\\($in\\); $gz = New-Object System.IO.Compression.GZipStream\\($fs, [System.IO.Compression.CompressionMode]::Decompress\\); $outFs = [System.IO.File]::Create\\($out\\); $gz.CopyTo\\($outFs\\); $outFs.Close\\(\\); $gz.Close\\(\\); $fs.Close\\(\\); \\(Get-Item $out\\).Length)",
+      "PowerShell($f = \"$env:TEMP\\\\design_payload.json\"; $stream = [System.IO.File]::OpenRead\\($f\\); $buf = New-Object byte[] 4096; [void]$stream.Read\\($buf, 0, 4096\\); $stream.Close\\(\\); [System.Text.Encoding]::UTF8.GetString\\($buf\\))"
+    ]
+  }
+}
