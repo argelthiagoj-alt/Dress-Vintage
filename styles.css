@@ -1583,10 +1583,10 @@ button {
     gap: 28px 24px;
   }
   .footer .display {
-    font-size: 14.5vw;
+    font-size: 10vw;
     letter-spacing: -0.045em;
     text-indent: 0;
-    margin-block: 12px 40px;
+    margin-block: 8px 32px;
   }
 
   /* Cart drawer */
@@ -1667,10 +1667,10 @@ button {
   /* Footer — keep DRESSVINTAGE in viewport */
   .footer { padding-block: 48px 24px; }
   .footer .display {
-    font-size: 15vw;
+    font-size: 11vw;
     letter-spacing: -0.04em;
     text-indent: 0;
-    margin-block: 8px 32px;
+    margin-block: 4px 24px;
   }
   .footer-cols {
     grid-template-columns: 1fr;
@@ -1700,7 +1700,7 @@ button {
   .brand-word { display: none; }
   .hero-title { font-size: 38px; }
   .catalog-head h1 { font-size: 40px; }
-  .footer .display { font-size: 14vw; letter-spacing: -0.04em; }
+  .footer .display { font-size: 10.5vw; letter-spacing: -0.04em; }
 }
 
 /* ---- Touch devices: hide custom cursor + always show quick-add hidden, wishlist visible ---- */
