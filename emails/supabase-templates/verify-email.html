@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confirmá tu email · DressVintage</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4ef;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0a0a0a;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f4f4ef;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width:600px;background:#ffffff;border:1px solid #e6e6e1;">
+          <tr>
+            <td style="padding:28px 32px;border-bottom:1px solid #e6e6e1;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:22px;letter-spacing:-0.02em;text-transform:uppercase;">
+              DRESSVINTAGE
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 32px;">
+              <h1 style="margin:0 0 14px;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:32px;line-height:1.05;letter-spacing:-0.03em;text-transform:uppercase;">
+                Confirmá tu email
+              </h1>
+              <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">
+                Para activar tu cuenta en DressVintage tocá el botón de abajo.
+                El link es válido por 24 horas.
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 12px;">
+                <tr>
+                  <td bgcolor="#0a0a0a" style="border:1px solid #0a0a0a;">
+                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#ffffff;text-decoration:none;">
+                      Confirmar email →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:18px 0 0;font-size:12px;color:#6b6b6b;line-height:1.6;">
+                Si no fuiste vos, podés ignorar este mail. No vamos a crear ninguna cuenta sin tu confirmación.
+              </p>
+              <p style="margin:14px 0 0;font-size:11px;color:#6b6b6b;font-family:'Courier New',monospace;word-break:break-all;">
+                {{ .ConfirmationURL }}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;background:#0a0a0a;color:#cdcdc6;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;">
+              DressVintage · Buenos Aires
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

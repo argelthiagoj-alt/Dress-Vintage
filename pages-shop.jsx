@@ -12,7 +12,11 @@ function HomePage({ go, addToCart, wishlist, toggleWish }) {
   useReveal();
   const byId = uM(() => Object.fromEntries(PRODUCTS.map(p => [p.id, p])), []);
   const featured = uM(() => PRODUCTS.filter(p => p.isNew || p.isSale).slice(0, 4), []);
-  const newDrop  = uM(() => PRODUCTS.filter(p => p.isNew), []);
+  // Nuevo Drop — superadmin-curated list via LANDING_CONFIG; preserves order, skips missing ids
+  const newDrop = uM(() => {
+    const ids = (window.LANDING_CONFIG && window.LANDING_CONFIG.newDropProductIds) || [];
+    return ids.map(id => byId[id]).filter(Boolean);
+  }, [byId]);
 
   return (
     <main className="page-trans">
@@ -161,7 +165,10 @@ function HomePage({ go, addToCart, wishlist, toggleWish }) {
             </div>
           </div>
           <div className="products cols-3 reveal">
-            {OUTFITS.map((o, i) => {
+            {OUTFITS
+              .filter(o => o.active !== false)
+              .sort((a, b) => (a.order || 999) - (b.order || 999))
+              .map((o, i) => {
               const items = o.items.map(id => byId[id]).filter(Boolean);
               const sum   = items.reduce((s, p) => s + p.price, 0);
               const final = Math.round(sum * (1 - o.discount));
@@ -235,6 +242,7 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
   const [colorF, setColorF] = uS([]);
   const [priceMax, setPriceMax] = uS(150000);
   const [showOnly, setShowOnly] = uS(null); // 'new'|'sale'|'low'|null
+  const [hideOOS, setHideOOS] = uS(false);
 
   const filtered = uM(() => {
     let list = PRODUCTS.filter(p => {
@@ -245,6 +253,7 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
     if (showOnly === "new")  list = list.filter(p => p.isNew);
     if (showOnly === "sale") list = list.filter(p => p.isSale);
     if (showOnly === "low")  list = list.filter(p => p.lowStock);
+    if (hideOOS)             list = list.filter(p => !ProductHelpers.isProductOutOfStock(p));
     if (sizeF.length)  list = list.filter(p => p.sizes.some(s => sizeF.includes(s.s) && s.stock > 0));
     if (colorF.length) list = list.filter(p => p.colorIds.some(c => colorF.includes(c)));
     list = list.filter(p => p.price <= priceMax);
@@ -253,7 +262,7 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
     if (sortBy === "price-desc") list = [...list].sort((a,b) => b.price - a.price);
     if (sortBy === "new")        list = [...list].sort((a,b) => (b.isNew?1:0) - (a.isNew?1:0));
     return list;
-  }, [catSlug, sortBy, sizeF, colorF, priceMax, showOnly, isSale, isAll]);
+  }, [catSlug, sortBy, sizeF, colorF, priceMax, showOnly, hideOOS, isSale, isAll]);
 
   const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
 
@@ -287,6 +296,20 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
             </ul>
           </div>
           <div className="filter-block">
+            <h6>Disponibilidad</h6>
+            <ul>
+              <li
+                className={hideOOS ? "active" : ""}
+                onClick={() => setHideOOS(!hideOOS)}
+                role="checkbox"
+                aria-checked={hideOOS}
+              >
+                <span>Ocultar agotados</span>
+                <span className="mono">{hideOOS ? "✓" : "○"}</span>
+              </li>
+            </ul>
+          </div>
+          <div className="filter-block">
             <h6>Categoría</h6>
             <ul>
               <li className={isAll?"active":""} onClick={() => go("catalog:all")}><span>Todas</span><span className="mono">{PRODUCTS.length}</span></li>
@@ -311,7 +334,9 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
           <div className="filter-block">
             <h6>Color</h6>
             <div className="size-chips">
-              {COLORS.map(c => (
+              {COLORS
+                .filter(c => PRODUCTS.some(pp => pp.colorIds.includes(c.id)))
+                .map(c => (
                 <button key={c.id} className={colorF.includes(c.id)?"on":""} onClick={() => toggle(colorF, setColorF, c.id)} style={{padding:"0 10px"}}>
                   <span style={{display:"inline-block", width: 10, height: 10, borderRadius: "50%", background: c.hex, border: "1px solid var(--line-strong)", marginRight: 8, verticalAlign:"middle"}}/>
                   {c.name}
@@ -333,9 +358,9 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
           <div className="toolbar">
             <div className="sort">
               <span style={{color:"var(--mute)"}}>Filtros activos:</span>
-              <span>{(sizeF.length + colorF.length + (showOnly?1:0)) || 0}</span>
-              {(sizeF.length || colorF.length || showOnly) ? (
-                <button onClick={() => { setSizeF([]); setColorF([]); setShowOnly(null); setPriceMax(150000);}}>Limpiar</button>
+              <span>{(sizeF.length + colorF.length + (showOnly?1:0) + (hideOOS?1:0)) || 0}</span>
+              {(sizeF.length || colorF.length || showOnly || hideOOS) ? (
+                <button onClick={() => { setSizeF([]); setColorF([]); setShowOnly(null); setPriceMax(150000); setHideOOS(false);}}>Limpiar</button>
               ) : null}
             </div>
             <div className="sort">
@@ -372,8 +397,12 @@ function CatalogPage({ catSlug, go, addToCart, wishlist, toggleWish }) {
 
 function ProductPage({ productId, go, addToCart, wishlist, toggleWish }) {
   const p = PRODUCTS.find(x => x.id === productId);
+  // Default color: first non-OOS, else first declared
+  const defaultColor = p && (
+    p.colorIds.find(cid => !ProductHelpers.isColorOOS(p, cid)) || p.colorIds[0]
+  );
   const [size, setSize] = uS(null);
-  const [color, setColor] = uS(p?.colorIds[0]);
+  const [color, setColor] = uS(defaultColor);
   const [added, setAdded] = uS(false);
   useReveal();
   uE(() => { window.scrollTo(0, 0); }, [productId]);
@@ -413,24 +442,17 @@ function ProductPage({ productId, go, addToCart, wishlist, toggleWish }) {
         <span>/</span>
         <span>{p.code}</span>
       </div>
+      {(() => {
+        // Per-color images: if the selected color has its own gallery, swap to it.
+        const activeImages = ProductHelpers.imagesForColor(p, color);
+        return (
       <div className="product-page">
         <div className="gallery">
-          <div className="gallery-main">
-            {p.img
-              ? <img src={p.img} alt={p.name} className="prod-img-main" />
-              : <Ph label={`${p.code} · front`} />}
-            {p.oos && (
-              <div className="oos-overlay">
-                <span>Agotado</span>
-              </div>
-            )}
-          </div>
-          {p.img && (
-            <div className="gallery-detail">
-              <img src={p.img} alt={`${p.name} detalle`} className="prod-img-zoom" />
-              <div className="gallery-tag">● {p.code} · DETALLE</div>
-            </div>
-          )}
+          <ImageCarousel
+            images={activeImages}
+            alt={`${p.name} (${color})`}
+            oosLabel={p.oos ? "Agotado" : null}
+          />
         </div>
         <aside className="p-info">
           <div className="eyebrow">{p.code} · {p.cat}</div>
@@ -438,23 +460,35 @@ function ProductPage({ productId, go, addToCart, wishlist, toggleWish }) {
           <div className="px">
             {p.was && <span className="strike">{fmt(p.was)}</span>}
             <span style={{color: p.isSale ? "var(--accent)" : "inherit"}}>{fmt(p.price)}</span>
-            {p.isSale && <span className="mono" style={{marginLeft: 10, color:"var(--accent)"}}>−{Math.round((1-p.price/p.was)*100)}%</span>}
+            {p.isSale && <span className="mono" style={{marginLeft: 10, color:"var(--accent)"}}>−{ProductHelpers.discountPercent(p)}%</span>}
             {p.oos && <span className="mono" style={{marginLeft: 10, color:"var(--accent)"}}>● Agotado</span>}
           </div>
           <p className="desc">{p.desc || "Pieza pensada para layering. Corte oversize, hombros caídos. Tirada corta."}</p>
 
           <div>
-            <div className="label"><span>Color · {COLORS.find(c=>c.id===color)?.name}</span></div>
+            <div className="label"><span>Color · {p.colors.find(c=>c.id===color)?.name || "—"}</span></div>
             <div className="colors">
-              {p.colorIds.map(cid => {
-                const c = COLORS.find(x => x.id === cid);
+              {p.colors.map(c => {
+                const colorOOS = ProductHelpers.isColorOOS(p, c.id);
                 return (
                   <button
-                    key={cid}
-                    className={color===cid?"on":""}
-                    onClick={() => setColor(cid)}
-                    style={{background: c.hex}}
-                    title={c.name}
+                    key={c.id}
+                    className={`${color===c.id?"on":""} ${colorOOS?"oos":""}`}
+                    onClick={() => {
+                      if (colorOOS) return;
+                      setColor(c.id);
+                      // Reset size if not available in the newly selected color
+                      if (size && ProductHelpers.stockOf(p, c.id, size) === 0) {
+                        setSize(null);
+                      }
+                    }}
+                    style={{
+                      background: c.hex,
+                      opacity: colorOOS ? 0.4 : 1,
+                      cursor: colorOOS ? "not-allowed" : "pointer",
+                    }}
+                    title={colorOOS ? `${c.name} (agotado)` : c.name}
+                    disabled={colorOOS}
                   />
                 );
               })}
@@ -467,25 +501,32 @@ function ProductPage({ productId, go, addToCart, wishlist, toggleWish }) {
               <span style={{cursor:"pointer", textDecoration: "underline"}}>Guía de talles</span>
             </div>
             <div className="sizes-row">
-              {p.sizes.map(s => (
-                <button
-                  key={s.s}
-                  className={`${size===s.s?"on":""} ${s.stock===0?"oos":""}`}
-                  disabled={s.stock===0}
-                  onClick={() => s.stock>0 && setSize(s.s)}
-                >
-                  {s.s}
-                </button>
-              ))}
+              {p.sizes.map(s => {
+                const stockHere = ProductHelpers.stockOf(p, color, s.s);
+                const oosHere = stockHere === 0;
+                return (
+                  <button
+                    key={s.s}
+                    className={`${size===s.s?"on":""} ${oosHere?"oos":""}`}
+                    disabled={oosHere}
+                    onClick={() => !oosHere && setSize(s.s)}
+                  >
+                    {s.s}
+                  </button>
+                );
+              })}
             </div>
-            {size && (
-              <div className="mono" style={{marginTop: 10, color: "var(--mute)"}}>
-                {p.sizes.find(s => s.s === size).stock <= 5
-                  ? <>● Quedan {p.sizes.find(s => s.s === size).stock} unidades</>
-                  : <>● Stock disponible</>
-                }
-              </div>
-            )}
+            {size && (() => {
+              const ss = ProductHelpers.stockOf(p, color, size);
+              return (
+                <div className="mono" style={{marginTop: 10, color: "var(--mute)"}}>
+                  {ss <= 5
+                    ? <>● Quedan {ss} {ss === 1 ? "unidad" : "unidades"}</>
+                    : <>● Stock disponible</>
+                  }
+                </div>
+              );
+            })()}
           </div>
 
           <div style={{display:"flex", gap: 8, marginTop: 12}}>
@@ -536,11 +577,13 @@ function ProductPage({ productId, go, addToCart, wishlist, toggleWish }) {
             </details>
             <details>
               <summary>Cuidado</summary>
-              <p>Lavar en frío, ciclo suave. Secar a la sombra. No usar lavandina.</p>
+              <p>{p.care || "Lavar en frío, ciclo suave. Secar a la sombra. No usar lavandina."}</p>
             </details>
           </div>
         </aside>
       </div>
+        );
+      })()}
 
       {/* RELATED */}
       <section className="section" style={{borderTop: "1px solid var(--line)", borderBottom: "none"}}>

@@ -71,8 +71,12 @@ function PromoMarquee() {
 
 /* ===== HEADER ============================ */
 
-function Header({ route, go, theme, setTheme, cartCount, openCart }) {
+function Header({ route, go, theme, setTheme, cartCount, openCart, currentUser, logout }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const showAdmin = Perms.canAccessAdmin(currentUser);
+  const accountLabel = currentUser
+    ? (currentUser.name.split(" ")[0] || "Cuenta")
+    : "Cuenta";
   const navItems = [
     { id: "home",     label: "Inicio" },
     { id: "catalog",  label: "Tienda" },
@@ -140,7 +144,12 @@ function Header({ route, go, theme, setTheme, cartCount, openCart }) {
               <button className="hide-mobile" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
                 {theme === "dark" ? "Light" : "Dark"}
               </button>
-              <button className="hide-mobile" onClick={() => go("login")}>Cuenta</button>
+              {showAdmin && (
+                <button className="hide-mobile header-admin-link" onClick={() => go("admin")}>
+                  Panel
+                </button>
+              )}
+              <button className="hide-mobile" onClick={() => go(currentUser ? "account" : "login")}>{accountLabel}</button>
               <button onClick={openCart} aria-label="Abrir bolsa" className="bag-btn">
                 {bagSvg}
                 {cartCount > 0 && <span className="bag-count">{cartCount}</span>}
@@ -186,9 +195,24 @@ function Header({ route, go, theme, setTheme, cartCount, openCart }) {
           ))}
         </nav>
         <div className="nav-drawer-foot">
-          <button onClick={() => goAndClose("login")}>
-            <span>Cuenta</span><span className="arr">→</span>
+          {showAdmin && (
+            <button onClick={() => goAndClose("admin")}>
+              <span>Panel admin</span><span className="arr">→</span>
+            </button>
+          )}
+          <button onClick={() => goAndClose(currentUser ? "account" : "login")}>
+            <span>{currentUser ? `Mi cuenta · ${accountLabel}` : "Cuenta"}</span><span className="arr">→</span>
           </button>
+          {currentUser && (
+            <>
+              <button onClick={() => goAndClose("account:orders")}>
+                <span>Mis compras</span><span className="arr">→</span>
+              </button>
+              <button onClick={() => { setMenuOpen(false); logout && logout(); }}>
+                <span>Cerrar sesión</span><span className="arr">×</span>
+              </button>
+            </>
+          )}
           <button onClick={() => { setMenuOpen(false); openCart(); }}>
             <span className="nav-bag">
               {bagSvg}
@@ -210,6 +234,39 @@ function Header({ route, go, theme, setTheme, cartCount, openCart }) {
 /* ===== FOOTER ============================ */
 
 function Footer({ go }) {
+  const [newsEmail, setNewsEmail] = useState("");
+  const [newsConsent, setNewsConsent] = useState(true);
+  const [newsStatus, setNewsStatus] = useState(null); // null | "loading" | "success" | "already" | "error" | "no-api"
+  const [newsErrorMsg, setNewsErrorMsg] = useState("");
+
+  const onSubscribe = async (e) => {
+    e.preventDefault();
+    setNewsErrorMsg("");
+    if (!newsEmail.trim()) { setNewsStatus("error"); setNewsErrorMsg("Ingresá un email"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(newsEmail.trim())) {
+      setNewsStatus("error"); setNewsErrorMsg("Email inválido"); return;
+    }
+    if (!newsConsent) { setNewsStatus("error"); setNewsErrorMsg("Necesitamos tu consentimiento"); return; }
+
+    setNewsStatus("loading");
+    if (!window.dvApi) { setNewsStatus("no-api"); return; }
+
+    const r = await window.dvApi.newsletterSubscribe({
+      email: newsEmail.trim(),
+      consent: true,
+      source: "footer",
+    });
+    if (r.ok) {
+      setNewsStatus(r.data && r.data.alreadySubscribed ? "already" : "success");
+      setNewsEmail("");
+    } else if (r.status === 404) {
+      setNewsStatus("no-api");
+    } else {
+      setNewsStatus("error");
+      setNewsErrorMsg(r.error || "Algo falló");
+    }
+  };
+
   return (
     <footer className="footer">
       <div className="shell">
@@ -220,10 +277,41 @@ function Footer({ go }) {
             <p style={{fontSize: 13, marginBottom: 16, color: "color-mix(in oklab, var(--bg) 70%, transparent)"}}>
               Drops antes que nadie. Sin spam, sin saturación.
             </p>
-            <form className="footer-newsletter" onSubmit={(e) => e.preventDefault()}>
-              <input type="email" placeholder="tu@email.com" />
-              <button type="submit">Sumar →</button>
+            <form className="footer-newsletter" onSubmit={onSubscribe}>
+              <input
+                type="email"
+                placeholder="tu@email.com"
+                value={newsEmail}
+                onChange={e => { setNewsEmail(e.target.value); if (newsStatus === "error") setNewsStatus(null); }}
+                disabled={newsStatus === "loading"}
+                required
+              />
+              <button type="submit" disabled={newsStatus === "loading"}>
+                {newsStatus === "loading" ? "..." : "Sumar →"}
+              </button>
             </form>
+            <label className="footer-newsletter-consent">
+              <input
+                type="checkbox"
+                checked={newsConsent}
+                onChange={e => setNewsConsent(e.target.checked)}
+              />
+              <span>Acepto recibir novedades y promociones.</span>
+            </label>
+            {newsStatus === "success" && (
+              <div className="footer-newsletter-msg ok mono">✓ Listo. Te suscribimos. Revisá tu inbox.</div>
+            )}
+            {newsStatus === "already" && (
+              <div className="footer-newsletter-msg ok mono">● Ya estabas suscripto. Todo bien.</div>
+            )}
+            {newsStatus === "error" && (
+              <div className="footer-newsletter-msg err mono">✗ {newsErrorMsg}</div>
+            )}
+            {newsStatus === "no-api" && (
+              <div className="footer-newsletter-msg mute mono">
+                Backend no configurado (demo). Conectá Supabase + Resend.
+              </div>
+            )}
           </div>
           <div>
             <h5>Tienda</h5>
@@ -263,12 +351,16 @@ function Footer({ go }) {
 function ProductCard({ product, go, onQuickAdd, onWish, wished }) {
   const sale = product.isSale;
   const oos = product.oos;
+  // Default color for quick-add: first color with any stock, else first declared
+  const defaultColor =
+    product.colorIds.find(cid => !ProductHelpers.isColorOOS(product, cid)) ||
+    product.colorIds[0];
   return (
     <div className={`product ${oos ? "oos" : ""}`} onClick={() => go(`product:${product.id}`)}>
       <div className="product-media">
         <div className="product-badges">
           {product.isNew && !oos && <span className="badge new">NEW</span>}
-          {sale && <span className="badge sale">−{Math.round((1 - product.price/product.was)*100)}%</span>}
+          {sale && <span className="badge sale">−{ProductHelpers.discountPercent(product)}%</span>}
           {product.lowStock && !oos && <span className="badge low">Últimas unidades</span>}
           {oos && <span className="badge oos">Agotado</span>}
         </div>
@@ -291,16 +383,20 @@ function ProductCard({ product, go, onQuickAdd, onWish, wished }) {
               <span>{product.code}</span>
             </div>
             <div className="sizes">
-              {product.sizes.map(s => (
-                <button
-                  key={s.s}
-                  className={s.stock === 0 ? "oos" : ""}
-                  disabled={s.stock === 0}
-                  onClick={() => s.stock > 0 && onQuickAdd(product, s.s)}
-                >
-                  {s.s}
-                </button>
-              ))}
+              {product.sizes.map(s => {
+                const stockHere = ProductHelpers.stockOf(product, defaultColor, s.s);
+                const noStock = stockHere === 0;
+                return (
+                  <button
+                    key={s.s}
+                    className={noStock ? "oos" : ""}
+                    disabled={noStock}
+                    onClick={() => !noStock && onQuickAdd(product, s.s, defaultColor)}
+                  >
+                    {s.s}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -428,7 +524,267 @@ function useReveal() {
   });
 }
 
+/* ===== IMAGE UTILITIES ======================== */
+
+// Compress a File → data URL JPEG. Returns existing URL strings unchanged.
+async function compressImage(file, maxW = 1200, quality = 0.85) {
+  if (typeof file === "string") return file; // already a URL/path, no-op
+  const dataURL = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  // Skip compression for SVG / GIF (preserve)
+  if (file.type === "image/svg+xml" || file.type === "image/gif") return dataURL;
+
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = dataURL;
+  });
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) return dataURL;
+  if (w <= maxW) {
+    // Still re-encode to JPEG if it's PNG/large to shrink — but only if file is big
+    if (file.size < 250 * 1024) return dataURL;
+  }
+  const scale = Math.min(1, maxW / w);
+  const canvas = document.createElement("canvas");
+  canvas.width  = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; // for transparent PNG → JPEG fallback bg
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+/* ===== FILE PICKER (drag & drop, click, mobile) ===== */
+
+function FilePicker({ value = [], onChange, multiple = true, label, hint, accept = "image/*" }) {
+  const inputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const list = Array.isArray(value) ? value : (value ? [value] : []);
+
+  const ingest = async (files) => {
+    if (!files || !files.length) return;
+    setBusy(true);
+    try {
+      const arr = Array.from(files).filter(f => f.type.startsWith("image/"));
+      const compressed = await Promise.all(arr.map(f => compressImage(f)));
+      const next = multiple ? [...list, ...compressed] : compressed.slice(-1);
+      onChange(next);
+    } catch (e) {
+      console.error(e);
+      alert("No se pudo procesar la imagen. Probá con otra.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer?.files) ingest(e.dataTransfer.files);
+  };
+  const onDragOver = (e) => { e.preventDefault(); setDragOver(true); };
+  const onDragLeave = (e) => { e.preventDefault(); setDragOver(false); };
+  const onChangeInput = (e) => {
+    ingest(e.target.files);
+    e.target.value = ""; // allow re-picking the same file
+  };
+
+  const remove = (i) => {
+    const next = list.filter((_, j) => j !== i);
+    onChange(next);
+  };
+  const makePrimary = (i) => {
+    if (i === 0) return;
+    const next = [list[i], ...list.filter((_, j) => j !== i)];
+    onChange(next);
+  };
+
+  return (
+    <div className="filepicker">
+      <div
+        className={`filepicker-drop ${dragOver ? "is-drag" : ""} ${busy ? "is-busy" : ""}`}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        onClick={() => inputRef.current && inputRef.current.click()}
+        role="button"
+        tabIndex={0}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          onChange={onChangeInput}
+          style={{display:"none"}}
+        />
+        <div className="filepicker-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
+            <path d="M12 16V4"/><path d="M6 10l6-6 6 6"/><path d="M4 20h16"/>
+          </svg>
+        </div>
+        <div className="filepicker-label">
+          {busy
+            ? "Procesando…"
+            : (label || (multiple ? "Arrastrá imágenes o tocá para subir" : "Arrastrá una imagen o tocá para subir"))}
+        </div>
+        <div className="mono filepicker-hint">{hint || "PNG · JPG · WEBP · se comprime a 1200px"}</div>
+      </div>
+
+      {list.length > 0 && (
+        <div className="filepicker-previews">
+          {list.map((url, i) => (
+            <div key={i} className="filepicker-preview">
+              <img src={url} alt={`imagen ${i+1}`} />
+              {i === 0 && <span className="filepicker-primary-tag mono">PRIMARIA</span>}
+              <div className="filepicker-preview-actions">
+                {i > 0 && (
+                  <button
+                    type="button"
+                    className="mono"
+                    onClick={(e) => { e.stopPropagation(); makePrimary(i); }}
+                    title="Marcar como primaria"
+                  >
+                    ★
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="mono"
+                  onClick={(e) => { e.stopPropagation(); remove(i); }}
+                  aria-label="Eliminar imagen"
+                  title="Eliminar"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== IMAGE CAROUSEL ========================= */
+
+function ImageCarousel({ images = [], alt = "", oosLabel }) {
+  const [idx, setIdx] = useState(0);
+  const touch = useRef({ x: null, y: null });
+
+  // Reset when image set changes (e.g., user switches color)
+  useEffect(() => { setIdx(0); }, [images]);
+
+  if (!images.length) {
+    return (
+      <div className="carousel">
+        <div className="carousel-frame">
+          <Ph label={alt || "SIN IMAGEN"} />
+        </div>
+      </div>
+    );
+  }
+
+  const safe = (i) => ((i % images.length) + images.length) % images.length;
+  const next = () => setIdx(i => safe(i + 1));
+  const prev = () => setIdx(i => safe(i - 1));
+
+  const onTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e) => {
+    if (touch.current.x == null) return;
+    const dx = e.changedTouches[0].clientX - touch.current.x;
+    const dy = e.changedTouches[0].clientY - touch.current.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) next(); else prev();
+    }
+    touch.current = { x: null, y: null };
+  };
+
+  return (
+    <div className="carousel">
+      <div
+        className="carousel-frame"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <div
+          className="carousel-track"
+          style={{ transform: `translateX(-${idx * 100}%)` }}
+        >
+          {images.map((src, i) => (
+            <div className="carousel-slide" key={i}>
+              <img src={src} alt={`${alt} ${i+1}/${images.length}`} draggable="false" />
+            </div>
+          ))}
+        </div>
+        {oosLabel && (
+          <div className="oos-overlay">
+            <span>{oosLabel}</span>
+          </div>
+        )}
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              className="carousel-arrow carousel-arrow-prev"
+              onClick={prev}
+              aria-label="Imagen anterior"
+            >←</button>
+            <button
+              type="button"
+              className="carousel-arrow carousel-arrow-next"
+              onClick={next}
+              aria-label="Imagen siguiente"
+            >→</button>
+            <div className="carousel-counter mono">{idx + 1} / {images.length}</div>
+            <div className="carousel-dots">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`carousel-dot ${i === idx ? "on" : ""}`}
+                  onClick={() => setIdx(i)}
+                  aria-label={`Ir a imagen ${i+1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div className="carousel-thumbs">
+          {images.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`carousel-thumb ${i === idx ? "on" : ""}`}
+              onClick={() => setIdx(i)}
+              aria-label={`Imagen ${i+1}`}
+            >
+              <img src={src} alt="" draggable="false" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 Object.assign(window, {
   fmt, Ph, CustomCursor, PromoMarquee, Header, Footer,
   ProductCard, CircleType, CartDrawer, useReveal,
+  FilePicker, ImageCarousel, compressImage,
 });
