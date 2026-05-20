@@ -157,13 +157,6 @@ function AdminDashboard({ user, go }) {
         )}
       </div>
 
-      <div className="adm-callout" style={{marginTop: 24}}>
-        <div className="eyebrow">Datos en localStorage</div>
-        <p style={{color:"var(--mute)", marginTop: 4}}>
-          Las ediciones se guardan en el navegador. Cuando conectes una base de datos real,
-          solo hay que reemplazar el cuerpo de <code>Store</code>, <code>UserStore</code> y <code>OrdersStore</code>.
-        </p>
-      </div>
     </div>
   );
 }
@@ -181,7 +174,7 @@ function AdminProducts({ go, refreshData }) {
            (p.slug || "").toLowerCase().includes(s);
   });
   const onDelete = (p) => {
-    if (!confirm(`Eliminar "${p.name}"?\n\nEsta acción persiste en localStorage.`)) return;
+    if (!confirm(`Eliminar "${p.name}"?`)) return;
     const raw = Store.loadProductsRaw().filter(x => x.id !== p.id);
     Store.saveProducts(raw);
     refreshData();
@@ -1510,15 +1503,6 @@ function AdminLanding({ go, refreshData }) {
         )}
       </div>
 
-      <div className="adm-callout">
-        <div className="eyebrow">Cómo funciona</div>
-        <p style={{color:"var(--mute)", marginTop: 4}}>
-          Los cambios se guardan automáticamente en <code>localStorage</code> (clave <code>dv-landing</code>).
-          La etiqueta <code>NEW</code> sigue existiendo a nivel producto, pero esta lista es la que
-          decide qué aparece en la landing y en qué orden. Si un producto se elimina del catálogo,
-          se filtra automáticamente al renderizar la home.
-        </p>
-      </div>
     </div>
   );
 }

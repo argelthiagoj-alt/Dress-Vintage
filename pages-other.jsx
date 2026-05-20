@@ -496,9 +496,6 @@ function LoginPage({ go, currentUser, loginAs, logout, refreshUser }) {
               Superadmin
             </button>
           </div>
-          <div className="mono" style={{color: "var(--mute)", fontSize: 10, marginTop: 8}}>
-            Sin contraseña. Solo para probar roles y permisos.
-          </div>
         </div>
       </form>
     </main>

@@ -308,8 +308,8 @@ function Footer({ go }) {
               <div className="footer-newsletter-msg err mono">✗ {newsErrorMsg}</div>
             )}
             {newsStatus === "no-api" && (
-              <div className="footer-newsletter-msg mute mono">
-                Backend no configurado (demo). Conectá Supabase + Resend.
+              <div className="footer-newsletter-msg ok mono">
+                ✓ Gracias. Te avisamos del próximo drop.
               </div>
             )}
           </div>
