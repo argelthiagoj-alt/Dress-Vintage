@@ -1,0 +1,28 @@
+# ============================================
+# Vercel — ignored on deploy
+# ============================================
+# These files stay in the repo (git) but DO NOT get deployed to Vercel.
+# Project is treated as a pure static site (HTML / CSS / JSX-via-Babel-standalone)
+# with all demo data living in localStorage.
+#
+# When you're ready to re-enable the backend (Supabase + Resend), remove
+# the relevant lines below and update vercel.json with the runtime config.
+
+# Server-side code (serverless functions + helpers + email templates + SQL)
+api/
+lib/
+emails/
+db/
+
+# Repo-only docs
+docs/
+
+# Build config — ignoring package.json forces Vercel to skip auto-detection
+# of "Node project", so it does NOT run `npm install`. That's what we want
+# for the static demo (no deps needed to render the prototype).
+package.json
+package-lock.json
+node_modules/
+
+# Env templates
+.env.example
