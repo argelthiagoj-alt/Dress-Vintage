@@ -142,8 +142,17 @@ function AboutPage({ go }) {
       </div>
 
       {/* full bleed photo */}
-      <div style={{margin: "0 calc(-1 * var(--pad-x)) 0", aspectRatio: "21/8"}}>
-        <Ph label="EQUIPO · TALLER 03" dark />
+      <div style={{margin: "0 calc(-1 * var(--pad-x)) 0", aspectRatio: "21/8", position: "relative", overflow: "hidden", background: "var(--bg-alt)"}}>
+        <img
+          src="assets/shop.png"
+          alt="DressVintage · taller"
+          className="about-img"
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
+        <div className="ed-tag" style={{zIndex: 2}}>
+          <span>● TALLER</span>
+          <span>CHACARITA · CABA</span>
+        </div>
       </div>
 
       <section className="values reveal">
@@ -319,8 +328,9 @@ function LoginPage({ go, currentUser, loginAs, logout, refreshUser }) {
     return (
       <main className="auth-wrap page-trans">
         <div className="auth-media">
-          <Ph label="ARCHIVO · CUENTA" dark />
-          <div style={{position:"absolute", left: 32, bottom: 32, color: "#fff", mixBlendMode: "difference", maxWidth: 340}}>
+          <img src="assets/login-hero.jpeg" alt="DressVintage · cuenta" className="auth-img" onError={(e) => { e.target.style.display = 'none'; }} />
+          <div className="auth-img-overlay" aria-hidden="true" />
+          <div style={{position:"absolute", left: 32, bottom: 32, color: "#fff", maxWidth: 340, zIndex: 2}}>
             <div className="eyebrow" style={{marginBottom: 12, color:"rgba(255,255,255,0.7)"}}>Sesión activa</div>
             <div className="display" style={{fontSize: 56, lineHeight: 0.88}}>Hola,<br/>{currentUser.name.split(" ")[0]}.</div>
           </div>
@@ -440,8 +450,9 @@ function LoginPage({ go, currentUser, loginAs, logout, refreshUser }) {
   return (
     <main className="auth-wrap page-trans">
       <div className="auth-media">
-        <Ph label="ARCHIVO · NEWSLETTER 03" dark />
-        <div style={{position:"absolute", left: 32, bottom: 32, color: "#fff", mixBlendMode: "difference", maxWidth: 340}}>
+        <img src="assets/login-hero.jpeg" alt="DressVintage · acceso" className="auth-img" onError={(e) => { e.target.style.display = 'none'; }} />
+        <div className="auth-img-overlay" aria-hidden="true" />
+        <div style={{position:"absolute", left: 32, bottom: 32, color: "#fff", maxWidth: 340, zIndex: 2}}>
           <div className="eyebrow" style={{marginBottom: 12, color:"rgba(255,255,255,0.7)"}}>Acceso</div>
           <div className="display" style={{fontSize: 56, lineHeight: 0.88}}>Bienvenido<br/>a la tienda.</div>
         </div>
